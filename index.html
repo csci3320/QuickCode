@@ -1,0 +1,239 @@
+<!doctype html>
+<html>
+
+<head>
+    <title>Binary Tree Visualizer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+    <link href="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" rel="icon"
+        type="image/x-icon" />
+    <!--tiny.cc/emptyimage-->
+</head>
+
+<body>
+    <div id='app'>
+        <v-app>
+            <v-main>
+
+                <v-container>
+                    <div class="text-h3 my-3">
+                        Binary Tree Visualizer
+                    </div>
+                    <v-row>
+                        <v-col cols=12>
+                            <v-card>
+                                <v-card-text>
+                                    <v-container>
+
+                                        <v-row>
+                                            <v-col>
+                                                <v-text-field v-model="next" label="Tree Values" @change="update">
+                                                </v-text-field>
+                                            </v-col>
+
+                                        </v-row>
+                                    </v-container>
+
+                                </v-card-text>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                    <v-row>
+                        <v-col>
+                            <v-card>
+                                <v-card-title>
+                                    <canvas id="canv"></canvas>
+                                </v-card-title>
+                            </v-card>
+                        </v-col>
+                    </v-row>
+
+                </v-container>
+            </v-main>
+        </v-app>
+    </div>
+
+    <script src='https://code.jquery.com/jquery-3.2.1.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js'></script>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+    <script>
+
+        nodeRadius = 30;
+        rowSize = 100;
+        lineWidth = 2;
+
+        const app = new Vue({
+            el: '#app',
+            vuetify: new Vuetify(),
+            data: {
+                root: null,
+                next: "5,3,7",
+                canvas: null,
+                ctx: null
+            },
+            mounted() {
+                this.canvas = $("#canv")[0];
+                this.canvas.width = 600;
+                this.canvas.height = 600;
+                this.canvas.style.width = "800px";
+                this.canvas.style.height = "600px";
+                this.ctx = this.canvas.getContext("2d");
+
+                // let list = this.next.split(",")
+                // this.node = null
+                // for (let number of list) {
+                //     this._add(number)
+                // }
+                // this.draw();
+                this.update()
+
+            },
+            methods: {
+                height() {
+                    if (!this.root)
+                        return 0;
+                    return this._height(this.root);
+                },
+                _height(node) {
+                    if (node == null)
+                        return 0;
+                    return Math.max(this._height(node.left), this._height(node.right)) + 1;
+                },
+                update() {
+                    let list = this.next.split(",")
+                    this.root = null
+                    for (let number of list) {
+                        this._add(number)
+                    }
+
+                    this.canvas = $("#canv")[0];
+                    this.canvas.width = 600;
+                    this.canvas.height = this.height()*(rowSize)
+                    this.canvas.style.width = "800px";
+                    this.canvas.style.height = this.canvas.height + "px";
+
+                    this.draw();
+                },
+                hasNoChildren(node) {
+                    return node.left == null && node.right == null
+                },
+                hasOneChild(node) {
+                    return (node.left != null && node.right == null) || (node.left == null && node.right != null);
+                },
+                hasTwoChildren(node) {
+                    return node.left != null && node.right != null
+                },
+                hasLeft(node) {
+                    return node.left != null;
+                },
+                hasRight(node) {
+                    return node.right != null;
+                },
+
+                _add(next) {
+                    if (this.root == null) {
+                        this.root = { value: next, right: null, left: null };
+                        this.length++;
+                        return true;
+                    }
+                    else {
+                        //console.log("Can't add more than one right now.")
+                        this.addToNode(this.root, next);
+                    }
+                },
+                addToNode(node, value) {
+                    if (node.value > value) {
+                        //Add to the left
+                        if (node.left == null) {
+                            node.left = { value: value, right: null, left: null };
+                            this.length++;
+                            return true;
+                        }
+                        else {
+                            this.addToNode(node.left, value);
+                        }
+
+                    }
+                    else {
+                        //Add to the right
+                        if (node.right == null) {
+                            node.right = { value: value, right: null, left: null };
+                            this.length++;
+                            return true;
+                        }
+                        else {
+                            this.addToNode(node.right, value);
+                        }
+                    }
+
+                },
+
+                draw() {
+                    this.ctx.fillStyle = "transparent";
+                    this.ctx.fillRect(0, 0, this.ctx.width, this.ctx.height);
+                    this.ctx.fillStyle = "black";
+                    this.ctx.strokeStyle = "black";
+                    this.ctx.lineWidth = lineWidth;
+
+                    this.drawNode(this.root, this.canvas.width / 2,nodeRadius+lineWidth-1, 0, this.canvas.width);
+
+                },
+                drawNode(node, x, y, boundsLeft, boundsRight) {
+                    this.drawValue(node, x, y)
+
+                    let leftX = (x + boundsLeft) / 2;
+                    let leftY = y + rowSize;
+                    let rightX = (x + boundsRight) / 2;
+                    let rightY = y + rowSize;
+
+
+                    //Get the angle between the nodes
+                    let angle = -Math.atan2(y - leftY, x - leftX)
+
+                    this.ctx.beginPath();
+                    if (node.left) {
+                        this.ctx.moveTo(x - Math.cos(angle) * nodeRadius, y + Math.sin(angle) * nodeRadius)
+                        this.ctx.lineTo(leftX + Math.cos(angle) * nodeRadius, leftY - Math.sin(angle) * nodeRadius)
+                    }
+                    if (node.right) {
+                        this.ctx.moveTo(x + Math.cos(angle) * nodeRadius, y + Math.sin(angle) * nodeRadius)
+                        this.ctx.lineTo(rightX - Math.cos(angle) * nodeRadius, rightY - Math.sin(angle) * nodeRadius)
+                    }
+                    this.ctx.stroke();
+
+
+                    if (node.left)
+                        this.drawNode(node.left, leftX, leftY, boundsLeft, x);
+
+                    if (node.right)
+                        this.drawNode(node.right, rightX, rightY, x, boundsRight);
+
+                },
+                drawValue(node, x, y) {
+                    this.drawText(node.value, x, y);
+                    this.ctx.beginPath();
+                    this.ctx.arc(x, y, nodeRadius, 0, Math.PI * 2)
+                    this.ctx.stroke();
+
+                },
+                drawText(string, x, y) {
+                    this.ctx.font = "bold 40px arial"
+                    let width = this.ctx.measureText(string).width;
+                    let height = this.ctx.measureText(string).actualBoundingBoxAscent;
+
+                    this.ctx.fillText(string, x - width / 2, y + height / 2);
+                },
+
+
+            },
+        });
+
+    </script>
+</body>
+
+</html>
