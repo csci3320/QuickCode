@@ -81,7 +81,10 @@
             vuetify: new Vuetify(),
             data: {
                 root: null,
-                next: "5,3,7",
+                // next:"2,1,4,3,6,5,7",
+                next:"4,3,2,1,6,7",
+                //next: "2,4,6,7,3,1",
+                // next:"5,3,4,2,1,6,7",
                 canvas: null,
                 ctx: null,
                 furthestRight: 1000,
@@ -162,7 +165,7 @@
                     }
                 },
                 addToNode(node, value) {
-                    if (node.value > value) {
+                    if (parseFloat(node.value) > parseFloat(value)) {
                         //Add to the left
                         if (node.left == null) {
                             node.left = { value: value, right: null, left: null };
@@ -246,13 +249,7 @@
                     if (y > this.furthestDown) this.furthestDown = y;
 
 
-                    // if(leftX < this.furthestLeft) this.furthestLeft = leftX;
-                    // if(leftY < this.furthestUp) this.furthestUp = leftY;
-                    // if(rightX > this.furthestRight) this.furthestRight = rightX;
-                    // if(rightY > this.furthestDown) this.furthestDown = rightY;
-
-
-
+                    
                     //Get the angle between the nodes
                     let angle = -Math.atan2(y - leftY, x - leftX)
 
