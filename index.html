@@ -50,6 +50,15 @@
                             </v-card>
                         </v-col>
                     </v-row>
+                    <v-row>
+                        <v-col>
+                            <v-card>
+                                <v-card-title>
+                                    <canvas id="canv2"></canvas>
+                                </v-card-title>
+                            </v-card>
+                        </v-col>
+                    </v-row>
 
                 </v-container>
             </v-main>
@@ -74,7 +83,11 @@
                 root: null,
                 next: "5,3,7",
                 canvas: null,
-                ctx: null
+                ctx: null,
+                furthestRight: 1000,
+                furthestLeft: 0,
+                furthestUp: 0,
+                furthestDown: 1000,
             },
             mounted() {
                 this.canvas = $("#canv")[0];
@@ -84,12 +97,9 @@
                 this.canvas.style.height = "600px";
                 this.ctx = this.canvas.getContext("2d");
 
-                // let list = this.next.split(",")
-                // this.node = null
-                // for (let number of list) {
-                //     this._add(number)
-                // }
-                // this.draw();
+                this.canvas2 = $("#canv2")[0];
+                this.ctx2 = this.canvas2.getContext("2d");
+
                 this.update()
 
             },
@@ -113,9 +123,14 @@
 
                     this.canvas = $("#canv")[0];
                     this.canvas.width = 600;
-                    this.canvas.height = this.height()*(rowSize)
+                    this.canvas.height = this.height() * (rowSize)
                     this.canvas.style.width = "600px";
                     this.canvas.style.height = this.canvas.height + "px";
+
+                    this.canvas2.width = this.canvas.width;
+                    this.canvas2.height = this.canvas.height;
+                    this.canvas2.style.width = this.canvas.style.width;
+                    this.canvas2.style.height = this.canvas.style.height;
 
                     this.draw();
                 },
@@ -180,8 +195,41 @@
                     this.ctx.strokeStyle = "black";
                     this.ctx.lineWidth = lineWidth;
 
-                    this.drawNode(this.root, this.canvas.width / 2,nodeRadius+lineWidth-1, 0, this.canvas.width);
 
+                    this.furthestUp = 1000;
+                    this.furthestDown = -1000;
+                    this.furthestLeft = 1000;
+                    this.furthestRight = -1000;
+
+                    this.drawNode(this.root, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width);
+
+
+
+
+                    this.furthestLeft -= nodeRadius + lineWidth;
+                    this.furthestUp -= nodeRadius + lineWidth;
+                    this.furthestRight += nodeRadius + lineWidth;
+                    this.furthestDown += nodeRadius + lineWidth;
+
+                    let w = this.furthestRight-this.furthestLeft;
+                    let h = this.furthestDown - this.furthestUp;
+
+                    this.canvas2.width = w;
+                    this.canvas2.height = h;
+                    this.canvas2.style.width = w + "px";
+                    this.canvas2.style.height = h + "px";
+
+                    //Now copy a cropped version to the second canvas
+                    this.ctx2.drawImage(this.ctx.canvas, 
+                    this.furthestLeft, this.furthestUp, this.furthestRight - this.furthestLeft, this.furthestDown - this.furthestUp,
+                    0,0,w,h,
+                    );
+
+
+                    this.ctx.fillStyle = "rgba(0,0,0,.5)"
+                    this.ctx.fillRect(this.furthestLeft, this.furthestUp, this.furthestRight - this.furthestLeft, this.furthestDown - this.furthestUp);
+
+                    
                 },
                 drawNode(node, x, y, boundsLeft, boundsRight) {
                     this.drawValue(node, x, y)
@@ -190,6 +238,19 @@
                     let leftY = y + rowSize;
                     let rightX = (x + boundsRight) / 2;
                     let rightY = y + rowSize;
+
+
+                    if (x < this.furthestLeft) this.furthestLeft = x;
+                    if (y < this.furthestUp) this.furthestUp = y;
+                    if (x > this.furthestRight) this.furthestRight = x;
+                    if (y > this.furthestDown) this.furthestDown = y;
+
+
+                    // if(leftX < this.furthestLeft) this.furthestLeft = leftX;
+                    // if(leftY < this.furthestUp) this.furthestUp = leftY;
+                    // if(rightX > this.furthestRight) this.furthestRight = rightX;
+                    // if(rightY > this.furthestDown) this.furthestDown = rightY;
+
 
 
                     //Get the angle between the nodes
