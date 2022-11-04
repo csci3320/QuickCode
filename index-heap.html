@@ -65,7 +65,7 @@
         </v-container>
       </v-main>
     </v-app>
-    
+
   </div>
 
   <script src='https://code.jquery.com/jquery-3.2.1.min.js'></script>
@@ -84,7 +84,7 @@
       vuetify: new Vuetify(),
       data: {
         root: null,
-        next: "4,3,2,1,6,7,5,0,9",
+        next: "1,2,9,7,8,6,7",
         canvas: null,
         ctx: null,
         furthestRight: 1000,
@@ -93,7 +93,7 @@
         furthestDown: 1000,
         length: 0,
         array: [],
-        leastColumnX:0,
+        leastColumnX: 0,
       },
       mounted() {
         this.canvas = $("#canv")[0];
@@ -112,7 +112,7 @@
       },
       methods: {
         height() {
-          if(this.length == 0) return 0;
+          if (this.length == 0) return 0;
           return parseInt(Math.log2(this.length));
         },
         update() {
@@ -131,13 +131,13 @@
           this.canvas2.style.width = this.canvas.style.width;
           this.canvas2.style.height = this.canvas.style.height;
 
-          for(let i = 0; i < 10; i++){
+          for (let i = 0; i < 10; i++) {
             console.log(this.getColumn(i));
           }
 
           this.draw();
         },
-        
+
 
         add(next) {
           if (this.root == null) {
@@ -158,13 +158,13 @@
           let marginY = nodeRadius
 
           let maxRow = this.getRow(this.length);
-          this.leastColumnX = (0+.5)  / (2**(maxRow+2)) * 2400 + nodeRadius + lineWidth
+          this.leastColumnX = (0 + .5) / (2 ** (maxRow + 2)) * 2400 + nodeRadius + lineWidth
           let maxColumnX = this.getColumn(this.length)
-          let maxY = (maxRow * 2) * nodeRadius*2 + (nodeRadius + lineWidth) * 2
+          let maxY = (maxRow * 2) * nodeRadius * 2 + (nodeRadius + lineWidth) * 2
 
           this.canvas = $("#canv")[0];
           this.canvas.width = 600 - this.leastColumnX + nodeRadius;
-          this.canvas.height = maxY + 2*(nodeRadius + lineWidth) + nodeRadius
+          this.canvas.height = maxY + 2 * (nodeRadius + lineWidth) + nodeRadius * 2
           this.canvas.style.width = this.canvas.width + "px";
           this.canvas.style.height = this.canvas.height + "px";
 
@@ -184,58 +184,71 @@
           this.furthestRight = -1000;
 
           //this.drawNode(0, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width);
-          for(let i = 0; i < this.length; i++){
-            this.drawNode(i, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width)
+          for (let i = 0; i < this.length; i++) {
+            if (this.array[i] != " ")
+              this.drawNode(i, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width)
           }
 
-          this.ctx.strokeStyle = "black"
+          // this.ctx.strokeStyle = "black"
+          // this.ctx.beginPath();
+          // this.ctx.rect(0, maxY + nodeRadius*2-lineWidth, this.length * (nodeRadius * 2) + lineWidth, 2*(nodeRadius + lineWidth));
+          // this.ctx.stroke()
+
+          for (let i = 0; i < this.length; i++) {
+            this.drawValue(this.array[i], i, i * (nodeRadius * 2) + nodeRadius + lineWidth, maxY + nodeRadius * 3)
+          }
+
+          this.ctx.font = "20px arial"
+          this.ctx.fillText("Heap Tree View", 0, 20);
+          this.ctx.fillText("Heap Array View", 0, maxY + nodeRadius + 18);
+
+          this.ctx.strokeStyle = "gray";
           this.ctx.beginPath();
-          this.ctx.rect(0, maxY + nodeRadius-lineWidth, this.length * (nodeRadius * 2) + lineWidth, 2*(nodeRadius + lineWidth));
-          this.ctx.stroke()
+          this.ctx.moveTo(0, maxY + nodeRadius / 2 + 10)
+          this.ctx.lineTo(this.canvas.width, maxY + nodeRadius / 2 + 10);
+          this.ctx.stroke();
 
-          for(let i = 0; i < this.length; i++){
-            this.drawValue(this.array[i], i, i * (nodeRadius*2) + nodeRadius + lineWidth, maxY + nodeRadius * 2 )
-          }
+
 
 
         },
-        getColumn(index){
+        getColumn(index) {
           let temp = index;
           let power = 0;
-          while(temp >= 2**power){
-            temp -= 2**power
-            power ++
+          while (temp >= 2 ** power) {
+            temp -= 2 ** power
+            power++
           }
           return temp;
         },
-        getRow(index){
-          let log = Math.log2(index+1)
-          let logFloor = Math.floor(Math.log2(index+1));
+        getRow(index) {
+          let log = Math.log2(index + 1)
+          let logFloor = Math.floor(Math.log2(index + 1));
           let logDifference = log - logFloor;
           return logFloor;
         },
-        getNodeCenterX(index){
+        getNodeCenterX(index) {
           let column = this.getColumn(index)
           let row = this.getRow(index);
 
-          return (column+.5)  / (2**(row+2)) * 2400 + 2*(nodeRadius + lineWidth) - this.leastColumnX;
+          return (column + .5) / (2 ** (row + 2)) * 2400 + 2 * (nodeRadius + lineWidth) - this.leastColumnX;
         },
-        getNodeCenterY(index){
+        getNodeCenterY(index) {
           let column = this.getColumn(index)
           let row = this.getRow(index);
 
-          return (row * 2) * nodeRadius*2 + nodeRadius + lineWidth
+          return (row * 2) * nodeRadius * 2 + nodeRadius + lineWidth
         },
-        drawNode(index,boundsLeft, boundsRight) {
+        drawNode(index, boundsLeft, boundsRight) {
           let node = this.array[index]
-          
+
           let row = this.getRow(index);
 
           let temp = index;
           let power = 0;
-          while(temp > 2**power){
-            temp -= 2**power
-            power ++
+          while (temp > 2 ** power) {
+            temp -= 2 ** power
+            power++
           }
 
           // let column = logDifference * 2**row;
@@ -270,7 +283,7 @@
             let angle = -Math.atan2(fromY - toY, fromX - toX);
             this.ctx.moveTo(fromX - Math.cos(angle) * nodeRadius, fromY + Math.sin(angle) * nodeRadius);
 
-            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle)*nodeRadius);
+            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle) * nodeRadius);
           }
           if (this.hasRightChild(index)) {
             let fromX = x;
@@ -280,23 +293,23 @@
             let angle = -Math.atan2(fromY - toY, fromX - toX);
             this.ctx.moveTo(fromX - Math.cos(angle) * nodeRadius, fromY + Math.sin(angle) * nodeRadius);
 
-            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle)*nodeRadius);
+            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle) * nodeRadius);
           }
           this.ctx.stroke();
 
         },
-        hasLeftChild(index){
+        hasLeftChild(index) {
           let leftChildIndex = this.getLeftChildIndex(index);
-          return leftChildIndex < this.length;
+          return leftChildIndex < this.length && this.array[leftChildIndex] != " ";
         },
-        hasRightChild(index){
+        hasRightChild(index) {
           let rightChildIndex = this.getRightChildIndex(index);
           return rightChildIndex < this.length;
         },
-        getLeftChildIndex(index){
+        getLeftChildIndex(index) {
           return index * 2 + 1
         },
-        getRightChildIndex(index){
+        getRightChildIndex(index) {
           return this.getLeftChildIndex(index) + 1;
         },
         drawValue(node, index, x, y) {
