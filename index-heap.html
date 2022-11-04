@@ -1,0 +1,335 @@
+<!doctype html>
+<html>
+
+<head>
+  <title>Heap Visualizer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, minimal-ui">
+  <link href="https://fonts.googleapis.com/css?family=Roboto:100,300,400,500,700,900" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@6.x/css/materialdesignicons.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.min.css" rel="stylesheet">
+  <link href="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" rel="icon"
+    type="image/x-icon" />
+  <!--tiny.cc/emptyimage-->
+</head>
+
+<body>
+  <div id='app'>
+    <v-app>
+      <v-main>
+        <v-container>
+          <div class="text-h3 my-3">
+            Heap Visualizer
+          </div>
+          <v-row>
+            <v-col cols=12>
+              <v-card>
+                <v-card-text>
+                  <v-container>
+                    <v-row>
+                      <v-col>
+                        <v-text-field v-model="next" label="Heap Values" @change="update">
+                        </v-text-field>
+                      </v-col>
+                    </v-row>
+                  </v-container>
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+          <v-row>
+            <v-col>
+              <v-card>
+                <v-card-title>
+                  <canvas id="canv"></canvas>
+                  <canvas id="canv2"></canvas>
+                </v-card-title>
+              </v-card>
+              <v-card>
+                <v-card-text>
+                  <div>
+                    <span v-for="a in array" :key="a">
+                      {{a}}
+                    </span>
+                  </div>
+
+                  <div>
+                    <span v-for="a in array.length" :key="a">
+                      {{a-1}}
+                    </span>
+                  </div>
+
+                </v-card-text>
+              </v-card>
+            </v-col>
+          </v-row>
+        </v-container>
+      </v-main>
+    </v-app>
+    
+  </div>
+
+  <script src='https://code.jquery.com/jquery-3.2.1.min.js'></script>
+  <script src='https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.4/lodash.min.js'></script>
+  <script src="https://cdn.jsdelivr.net/npm/vue@2.x/dist/vue.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vuetify@2.x/dist/vuetify.js"></script>
+
+  <script>
+
+    nodeRadius = 30;
+    rowSize = 100;
+    lineWidth = 2;
+
+    const app = new Vue({
+      el: '#app',
+      vuetify: new Vuetify(),
+      data: {
+        root: null,
+        next: "4,3,2,1,6,7,5,0,9",
+        canvas: null,
+        ctx: null,
+        furthestRight: 1000,
+        furthestLeft: 0,
+        furthestUp: 0,
+        furthestDown: 1000,
+        length: 0,
+        array: [],
+        leastColumnX:0,
+      },
+      mounted() {
+        this.canvas = $("#canv")[0];
+        this.canvas.width = 600;
+        this.canvas.height = 600;
+        this.canvas.style.width = "600px";
+        this.canvas.style.height = "600px";
+        this.ctx = this.canvas.getContext("2d");
+
+        this.canvas2 = $("#canv2")[0];
+        this.ctx2 = this.canvas2.getContext("2d");
+
+        this.update()
+
+
+      },
+      methods: {
+        height() {
+          if(this.length == 0) return 0;
+          return parseInt(Math.log2(this.length));
+        },
+        update() {
+          let list = this.next.split(",")
+          this.array = list
+          this.length = this.array.length
+
+          this.canvas = $("#canv")[0];
+          this.canvas.width = 600;
+          this.canvas.height = 600
+          this.canvas.style.width = "600px";
+          this.canvas.style.height = "600px";
+
+          this.canvas2.width = this.canvas.width;
+          this.canvas2.height = this.canvas.height;
+          this.canvas2.style.width = this.canvas.style.width;
+          this.canvas2.style.height = this.canvas.style.height;
+
+          for(let i = 0; i < 10; i++){
+            console.log(this.getColumn(i));
+          }
+
+          this.draw();
+        },
+        
+
+        add(next) {
+          if (this.root == null) {
+            this.root = { value: next, right: null, left: null };
+            this.length = 1
+            return true;
+          }
+          else {
+            //console.log("Can't add more than one right now.")
+            //this.addToNode(this.root, next);
+            this.length++;
+            //console.log(parseInt(Math.log2(this.length)))
+          }
+        },
+
+        draw() {
+
+          let marginY = nodeRadius
+
+          let maxRow = this.getRow(this.length);
+          this.leastColumnX = (0+.5)  / (2**(maxRow+2)) * 2400 + nodeRadius + lineWidth
+          let maxColumnX = this.getColumn(this.length)
+          let maxY = (maxRow * 2) * nodeRadius*2 + (nodeRadius + lineWidth) * 2
+
+          this.canvas = $("#canv")[0];
+          this.canvas.width = 600 - this.leastColumnX + nodeRadius;
+          this.canvas.height = maxY + 2*(nodeRadius + lineWidth) + nodeRadius
+          this.canvas.style.width = this.canvas.width + "px";
+          this.canvas.style.height = this.canvas.height + "px";
+
+          this.ctx = this.canvas.getContext("2d")
+
+
+          this.ctx.fillStyle = "transparent";
+          this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+          this.ctx.fillStyle = "black";
+          this.ctx.strokeStyle = "black";
+          this.ctx.lineWidth = lineWidth;
+
+
+          this.furthestUp = 1000;
+          this.furthestDown = -1000;
+          this.furthestLeft = 1000;
+          this.furthestRight = -1000;
+
+          //this.drawNode(0, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width);
+          for(let i = 0; i < this.length; i++){
+            this.drawNode(i, this.canvas.width / 2, nodeRadius + lineWidth - 1, 0, this.canvas.width)
+          }
+
+          this.ctx.strokeStyle = "black"
+          this.ctx.beginPath();
+          this.ctx.rect(0, maxY + nodeRadius-lineWidth, this.length * (nodeRadius * 2) + lineWidth, 2*(nodeRadius + lineWidth));
+          this.ctx.stroke()
+
+          for(let i = 0; i < this.length; i++){
+            this.drawValue(this.array[i], i, i * (nodeRadius*2) + nodeRadius + lineWidth, maxY + nodeRadius * 2 )
+          }
+
+
+        },
+        getColumn(index){
+          let temp = index;
+          let power = 0;
+          while(temp >= 2**power){
+            temp -= 2**power
+            power ++
+          }
+          return temp;
+        },
+        getRow(index){
+          let log = Math.log2(index+1)
+          let logFloor = Math.floor(Math.log2(index+1));
+          let logDifference = log - logFloor;
+          return logFloor;
+        },
+        getNodeCenterX(index){
+          let column = this.getColumn(index)
+          let row = this.getRow(index);
+
+          return (column+.5)  / (2**(row+2)) * 2400 + 2*(nodeRadius + lineWidth) - this.leastColumnX;
+        },
+        getNodeCenterY(index){
+          let column = this.getColumn(index)
+          let row = this.getRow(index);
+
+          return (row * 2) * nodeRadius*2 + nodeRadius + lineWidth
+        },
+        drawNode(index,boundsLeft, boundsRight) {
+          let node = this.array[index]
+          
+          let row = this.getRow(index);
+
+          let temp = index;
+          let power = 0;
+          while(temp > 2**power){
+            temp -= 2**power
+            power ++
+          }
+
+          // let column = logDifference * 2**row;
+          let column = this.getColumn(index)
+          y = this.getNodeCenterY(index);
+          // x = (column+.5)  / (2**(row+2)) * 2400 + 2*(nodeRadius + lineWidth) - this.leastColumnX;
+          x = this.getNodeCenterX(index);
+          this.drawValue(node, index, x, y)
+
+          let leftX = (x + boundsLeft) / 2;
+          let leftY = y + rowSize;
+          let rightX = (x + boundsRight) / 2;
+          let rightY = y + rowSize;
+
+
+          if (x < this.furthestLeft) this.furthestLeft = x;
+          if (y < this.furthestUp) this.furthestUp = y;
+          if (x > this.furthestRight) this.furthestRight = x;
+          if (y > this.furthestDown) this.furthestDown = y;
+
+
+
+          //Get the angle between the nodes
+          let angle = -Math.atan2(y - leftY, x - leftX)
+
+          this.ctx.beginPath();
+          if (this.hasLeftChild(index)) {
+            let fromX = x;
+            let fromY = y;
+            let toX = this.getNodeCenterX(this.getLeftChildIndex(index));
+            let toY = this.getNodeCenterY(this.getLeftChildIndex(index));
+            let angle = -Math.atan2(fromY - toY, fromX - toX);
+            this.ctx.moveTo(fromX - Math.cos(angle) * nodeRadius, fromY + Math.sin(angle) * nodeRadius);
+
+            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle)*nodeRadius);
+          }
+          if (this.hasRightChild(index)) {
+            let fromX = x;
+            let fromY = y;
+            let toX = this.getNodeCenterX(this.getRightChildIndex(index));
+            let toY = this.getNodeCenterY(this.getRightChildIndex(index));
+            let angle = -Math.atan2(fromY - toY, fromX - toX);
+            this.ctx.moveTo(fromX - Math.cos(angle) * nodeRadius, fromY + Math.sin(angle) * nodeRadius);
+
+            this.ctx.lineTo(toX + Math.cos(angle) * nodeRadius, toY - Math.sin(angle)*nodeRadius);
+          }
+          this.ctx.stroke();
+
+        },
+        hasLeftChild(index){
+          let leftChildIndex = this.getLeftChildIndex(index);
+          return leftChildIndex < this.length;
+        },
+        hasRightChild(index){
+          let rightChildIndex = this.getRightChildIndex(index);
+          return rightChildIndex < this.length;
+        },
+        getLeftChildIndex(index){
+          return index * 2 + 1
+        },
+        getRightChildIndex(index){
+          return this.getLeftChildIndex(index) + 1;
+        },
+        drawValue(node, index, x, y) {
+          this.drawText(node, x, y);
+          this.drawTextSmall(node, index, x, y)
+          this.ctx.beginPath();
+          this.ctx.arc(x, y, nodeRadius, 0, Math.PI * 2)
+          this.ctx.stroke();
+
+        },
+        drawText(string, x, y) {
+          this.ctx.font = "bold 40px arial"
+          let width = this.ctx.measureText(string).width;
+          let height = this.ctx.measureText(string).actualBoundingBoxAscent;
+
+          let startX = x - width / 2
+          let startY = y + height / 2
+          this.ctx.fillText(string, startX, startY);
+
+        },
+        drawTextSmall(node, string, x, y) {
+          this.ctx.font = "20px arial"
+          let width = this.ctx.measureText(string).width;
+          let height = this.ctx.measureText(string).actualBoundingBoxAscent;
+
+          this.ctx.fillText(string, x - width / 2 + 15, y + height / 2 + 10);
+        },
+
+
+      },
+    });
+
+  </script>
+</body>
+
+</html>
