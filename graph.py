@@ -1,37 +1,30 @@
 class Node:
-  def __init__(self, name):
-    self.name = name
-    self.links = []
-  def addLink(self, link):
-    self.links.append(link)
-    link.links.append(self)
-  
+    def __init__(self, name):
+        self.name = name
+        self.edges = []
+
+class Edge:
+    def __init__(self, node1, node2):
+        self.node1 = node1
+        self.node2 = node2
+
+n1 = Node("SLC")
+n2 = Node("ATL")
+n3 = Node("OMA")
+n4 = Node("SFO")
+
+e1 = Edge(n1, n2)
+e2 = Edge(n3, n2)
+e3 = Edge(n4, n2)
+e4 = Edge(n1, n4)
 
 class Graph:
-  def __init__(self, root):
-    self.root = root
+    def __init__(self, nodes, edges):
+        self.nodes = nodes
+        self.edges = edges
 
-oma = Node("Omaha Airport")
-sfo = Node("San Francisco Airport")
-atl = Node("Atlanta Airport")
-ord = Node("Chicago Airport")
+graph = Graph([n1,n2,n3,n4],[e1,e2,e3,e4])
 
-oma.addLink(atl)
-sfo.addLink(atl)
-ord.addLink(atl)
-ord.addLink(sfo)
-
-omahaFlights = Graph(oma)
-atlantaFlights = Graph(atl)
-
-print(f"From Omaha I can fly to:")
-for node in omahaFlights.root.links:
-  print(node.name)
-print()
-
-print(f"From Atlanta I can fly to:")
-for node in atlantaFlights.root.links:
-  print(node.name)
 
 
 
